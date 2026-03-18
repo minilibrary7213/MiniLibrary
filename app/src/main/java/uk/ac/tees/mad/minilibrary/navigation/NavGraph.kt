@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import uk.ac.tees.mad.minilibrary.screens.AuthScreen
+import uk.ac.tees.mad.minilibrary.screens.HomeScreen
 
 import uk.ac.tees.mad.minilibrary.screens.SplashScreen
 
@@ -38,7 +39,7 @@ fun NavGraph(
 
         // Authentication Screen
         composable(Screen.Auth.route) {
-            AuthScreen(
+            AuthScreen(a
                 onNavigateToHome = {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Auth.route) { inclusive = true }
@@ -49,14 +50,14 @@ fun NavGraph(
 
         // Home Screen
         composable(Screen.Home.route) {
-//            HomeScreen(
-//                onNavigateToReader = { bookId ->
-//                    navController.navigate(Screen.BookReader.createRoute(bookId))
-//                },
-//                onNavigateToSettings = {
-//                    navController.navigate(Screen.Settings.route)
-//                }
-//            )
+            HomeScreen(
+                onNavigateToReader = { bookId ->
+                    navController.navigate(Screen.BookReader.createRoute(bookId))
+                },
+                onNavigateToSettings = {
+                    navController.navigate(Screen.Settings.route)
+                }
+            )
         }
 
         // Book Reader Screen (with argument)
