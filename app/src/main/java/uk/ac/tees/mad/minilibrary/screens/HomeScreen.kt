@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
@@ -92,20 +93,17 @@ class HomeViewModel : ViewModel() {
     fun deleteBook(book: Book) {
         viewModelScope.launch {
             try {
-                // Delete from database
                 SupabaseClient.database
                     .from("books")
                     .delete {
                         filter { eq("id", book.id) }
                     }
 
-                // Delete from storage
                 val userId = SupabaseClient.auth.currentUserOrNull()?.id ?: return@launch
                 SupabaseClient.storage
                     .from("books")
                     .delete("$userId/${book.fileName}")
 
-                // Reload books
                 loadBooks()
 
             } catch (e: Exception) {
@@ -174,7 +172,6 @@ fun HomeScreen(
                 .padding(paddingValues)
         ) {
             if (viewModel.isLoading) {
-                // Loading State
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -184,12 +181,10 @@ fun HomeScreen(
                     )
                 }
             } else if (viewModel.books.isEmpty()) {
-                // Empty State
                 EmptyLibraryView(
                     onAddBook = { viewModel.toggleUploadDialog() }
                 )
             } else {
-                // Books Grid
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
                     contentPadding = PaddingValues(16.dp),
@@ -207,7 +202,6 @@ fun HomeScreen(
             }
         }
 
-        // Upload Dialog
         if (viewModel.showUploadDialog) {
             UploadBookDialog(
                 onDismiss = { viewModel.toggleUploadDialog() },
@@ -299,7 +293,6 @@ fun BookCard(
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Book Cover (Gradient with Icon)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -321,7 +314,6 @@ fun BookCard(
                     tint = Color.White.copy(alpha = 0.8f)
                 )
 
-                // Delete button
                 IconButton(
                     onClick = { showDeleteDialog = true },
                     modifier = Modifier
@@ -338,7 +330,6 @@ fun BookCard(
                 }
             }
 
-            // Book Info
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -377,7 +368,6 @@ fun BookCard(
         }
     }
 
-    // Delete Confirmation Dialog
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
@@ -485,8 +475,7 @@ fun UploadBookDialog(
                     isUploading = true
                     errorMessage = null
 
-                    // This will be implemented in the next part with actual upload
-                    // For now, just show a message
+
                     errorMessage = "Upload feature coming soon!"
                     isUploading = false
                 },
@@ -511,4 +500,113 @@ fun UploadBookDialog(
             }
         }
     )
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview(showBackground = true, name = "HomeScreenPreview")
+@Composable
+fun HomeScreenPreview() {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Column {
+                        Text(
+                            "MiniLibrary",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp
+                        )
+                        Text(
+                            "Welcome, User",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = {}) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF6366F1),
+                    titleContentColor = Color.White,
+                    actionIconContentColor = Color.White
+                )
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {},
+                containerColor = Color(0xFF6366F1),
+                contentColor = Color.White
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add Book"
+                )
+            }
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MenuBook,
+                    contentDescription = null,
+                    modifier = Modifier.size(120.dp),
+                    tint = Color.Gray.copy(alpha = 0.3f)
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text(
+                    text = "Your library is empty",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Gray
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Start building your collection\nby adding your first book",
+                    fontSize = 14.sp,
+                    color = Color.Gray.copy(alpha = 0.7f),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Button(
+                    onClick = {},
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF6366F1)
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Add Your First Book")
+                }
+            }
+        }
+    }
 }

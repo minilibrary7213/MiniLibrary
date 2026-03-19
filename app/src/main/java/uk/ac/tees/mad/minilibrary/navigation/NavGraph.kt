@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import uk.ac.tees.mad.minilibrary.screens.AuthScreen
 import uk.ac.tees.mad.minilibrary.screens.HomeScreen
+import uk.ac.tees.mad.minilibrary.screens.SettingsScreen
 
 import uk.ac.tees.mad.minilibrary.screens.SplashScreen
 
@@ -39,7 +40,7 @@ fun NavGraph(
 
         // Authentication Screen
         composable(Screen.Auth.route) {
-            AuthScreen(a
+            AuthScreen(
                 onNavigateToHome = {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Auth.route) { inclusive = true }
@@ -76,18 +77,17 @@ fun NavGraph(
 //            )
         }
 
-        // Settings Screen
         composable(Screen.Settings.route) {
-//            SettingsScreen(
-//                onNavigateBack = {
-//                    navController.popBackStack()
-//                },
-//                onLogout = {
-//                    navController.navigate(Screen.Auth.route) {
-//                        popUpTo(0) { inclusive = true }
-//                    }
-//                }
-//            )
+            SettingsScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onLogout = {
+                    navController.navigate(Screen.Auth.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
         }
     }
 }
