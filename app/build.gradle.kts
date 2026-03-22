@@ -59,6 +59,8 @@ dependencies {
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    implementation("com.github.mhiew:android-pdf-viewer:3.2.0-beta.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
     // Room with KSP instead of KAPT
     implementation("androidx.room:room-runtime:2.6.1")
