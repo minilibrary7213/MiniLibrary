@@ -1,59 +1,27 @@
 package uk.ac.tees.mad.minilibrary.screens
 
+import android.content.Context
 import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.FileOpen
-import androidx.compose.material.icons.filled.Label
-import androidx.compose.material.icons.filled.MenuBook
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -62,11 +30,19 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import uk.ac.tees.mad.minilibrary.database.AppDatabase
+import uk.ac.tees.mad.minilibrary.database.BookEntity
 import uk.ac.tees.mad.minilibrary.models.Book
 import uk.ac.tees.mad.minilibrary.supabase.SupabaseClient
+import java.util.*
 
-class HomeViewModel : ViewModel() {
+class HomeViewModel(private val context: Context) : ViewModel() {
+
+    private val database = AppDatabase.getInstance(context)
+    private val bookDao = database.bookDao()
 
     var books by mutableStateOf<List<Book>>(emptyList())
         private set
@@ -108,11 +84,42 @@ class HomeViewModel : ViewModel() {
                     .decodeList<Book>()
 
                 books = result.sortedByDescending { it.uploadedAt }
+
+                val entities = result.map { book ->
+                    BookEntity(
+                        id = book.id,
+                        userId = book.userId,
+                        title = book.title,
+                        subject = book.subject,
+                        fileName = book.fileName,
+                        fileUrl = book.fileUrl,
+                        uploadedAt = book.uploadedAt,
+                        isSynced = true
+                    )
+                }
+                bookDao.insertBooks(entities)
+
                 isLoading = false
 
             } catch (e: Exception) {
                 e.printStackTrace()
-                println("Error loading books: ${e.message}")
+
+                withContext(Dispatchers.IO) {
+                    bookDao.getAllBooks().collect { entities ->
+                        books = entities.map { entity ->
+                            Book(
+                                id = entity.id,
+                                userId = entity.userId,
+                                title = entity.title,
+                                subject = entity.subject,
+                                fileName = entity.fileName,
+                                fileUrl = entity.fileUrl,
+                                uploadedAt = entity.uploadedAt
+                            )
+                        }
+                    }
+                }
+
                 isLoading = false
             }
         }
@@ -136,13 +143,105 @@ class HomeViewModel : ViewModel() {
                     .from("books")
                     .delete("$userId/${book.fileName}")
 
+                bookDao.deleteBookById(book.id)
+
                 loadBooks()
 
             } catch (e: Exception) {
                 e.printStackTrace()
-                println("Error deleting book: ${e.message}")
             }
         }
+    }
+
+    fun uploadBook(
+        context: Context,
+        uri: Uri,
+        title: String,
+        subject: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val userId = SupabaseClient.auth.currentUserOrNull()?.id ?: run {
+                    onError("User not authenticated")
+                    return@launch
+                }
+
+                val fileName = getFileName(context, uri) ?: "book_${System.currentTimeMillis()}.pdf"
+                val fileBytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                    ?: run {
+                        onError("Failed to read file")
+                        return@launch
+                    }
+
+                val filePath = "$userId/$fileName"
+
+                SupabaseClient.storage
+                    .from("books")
+                    .upload(filePath, fileBytes, upsert = true)
+
+                val fileUrl = SupabaseClient.storage
+                    .from("books")
+                    .publicUrl(filePath)
+
+                val book = Book(
+                    id = UUID.randomUUID().toString(),
+                    userId = userId,
+                    title = title,
+                    subject = subject,
+                    fileName = fileName,
+                    fileUrl = fileUrl,
+                    uploadedAt = System.currentTimeMillis()
+                )
+
+                SupabaseClient.database
+                    .from("books")
+                    .insert(book)
+
+                val entity = BookEntity(
+                    id = book.id,
+                    userId = book.userId,
+                    title = book.title,
+                    subject = book.subject,
+                    fileName = book.fileName,
+                    fileUrl = book.fileUrl,
+                    uploadedAt = book.uploadedAt,
+                    isSynced = true
+                )
+                bookDao.insertBook(entity)
+
+                onSuccess()
+                loadBooks()
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+                onError(e.message ?: "Upload failed")
+            }
+        }
+    }
+
+    private fun getFileName(context: Context, uri: Uri): String? {
+        var result: String? = null
+        if (uri.scheme == "content") {
+            val cursor = context.contentResolver.query(uri, null, null, null, null)
+            cursor?.use {
+                if (it.moveToFirst()) {
+                    val index = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    if (index != -1) {
+                        result = it.getString(index)
+                    }
+                }
+            }
+        }
+        if (result == null) {
+            result = uri.path
+            val cut = result?.lastIndexOf('/')
+            if (cut != -1) {
+                result = result?.substring(cut!! + 1)
+            }
+        }
+        return result
     }
 }
 
@@ -150,9 +249,18 @@ class HomeViewModel : ViewModel() {
 @Composable
 fun HomeScreen(
     onNavigateToReader: (String) -> Unit,
-    onNavigateToSettings: () -> Unit,
-    viewModel: HomeViewModel = viewModel()
+    onNavigateToSettings: () -> Unit
 ) {
+    val context = LocalContext.current
+    val viewModel: HomeViewModel = viewModel(
+        factory = object : androidx.lifecycle.ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return HomeViewModel(context) as T
+            }
+        }
+    )
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -236,11 +344,8 @@ fun HomeScreen(
 
         if (viewModel.showUploadDialog) {
             UploadBookDialog(
-                onDismiss = { viewModel.toggleUploadDialog() },
-                onBookUploaded = {
-                    viewModel.toggleUploadDialog()
-                    viewModel.loadBooks()
-                }
+                viewModel = viewModel,
+                onDismiss = { viewModel.toggleUploadDialog() }
             )
         }
     }
@@ -426,19 +531,22 @@ fun BookCard(
 
 @Composable
 fun UploadBookDialog(
-    onDismiss: () -> Unit,
-    onBookUploaded: () -> Unit
+    viewModel: HomeViewModel,
+    onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
     var title by remember { mutableStateOf("") }
     var subject by remember { mutableStateOf("") }
     var selectedFileUri by remember { mutableStateOf<Uri?>(null) }
     var isUploading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var uploadProgress by remember { mutableStateOf(0f) }
 
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         selectedFileUri = uri
+        errorMessage = null
     }
 
     AlertDialog(
@@ -450,7 +558,10 @@ fun UploadBookDialog(
             ) {
                 OutlinedTextField(
                     value = title,
-                    onValueChange = { title = it },
+                    onValueChange = {
+                        title = it
+                        errorMessage = null
+                    },
                     label = { Text("Book Title") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -461,7 +572,10 @@ fun UploadBookDialog(
 
                 OutlinedTextField(
                     value = subject,
-                    onValueChange = { subject = it },
+                    onValueChange = {
+                        subject = it
+                        errorMessage = null
+                    },
                     label = { Text("Subject/Category") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -486,37 +600,89 @@ fun UploadBookDialog(
                     )
                 }
 
+                if (isUploading) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    LinearProgressIndicator(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = Color(0xFF6366F1)
+                    )
+                    Text(
+                        text = "Uploading...",
+                        fontSize = 12.sp,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+
                 if (errorMessage != null) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = errorMessage!!,
-                        color = Color.Red,
-                        fontSize = 12.sp
-                    )
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFFFFEBEE)
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Error,
+                                contentDescription = null,
+                                tint = Color(0xFFD32F2F),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = errorMessage!!,
+                                color = Color(0xFFD32F2F),
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
                 }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    if (title.isBlank() || subject.isBlank() || selectedFileUri == null) {
-                        errorMessage = "Please fill all fields and select a PDF"
+                    if (title.isBlank()) {
+                        errorMessage = "Please enter a title"
+                        return@Button
+                    }
+                    if (subject.isBlank()) {
+                        errorMessage = "Please enter a subject"
+                        return@Button
+                    }
+                    if (selectedFileUri == null) {
+                        errorMessage = "Please select a PDF file"
                         return@Button
                     }
 
                     isUploading = true
                     errorMessage = null
 
-
-                    errorMessage = "Upload feature coming soon!"
-                    isUploading = false
+                    viewModel.uploadBook(
+                        context = context,
+                        uri = selectedFileUri!!,
+                        title = title,
+                        subject = subject,
+                        onSuccess = {
+                            isUploading = false
+                            onDismiss()
+                        },
+                        onError = { error ->
+                            isUploading = false
+                            errorMessage = error
+                        }
+                    )
                 },
                 enabled = !isUploading
             ) {
                 if (isUploading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(20.dp),
-                        color = Color.White
+                        color = Color.White,
+                        strokeWidth = 2.dp
                     )
                 } else {
                     Text("Upload")
