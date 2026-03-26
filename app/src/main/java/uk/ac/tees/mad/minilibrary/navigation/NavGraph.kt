@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import uk.ac.tees.mad.minilibrary.screens.AuthScreen
+import uk.ac.tees.mad.minilibrary.screens.BookReaderScreen
 import uk.ac.tees.mad.minilibrary.screens.HomeScreen
 import uk.ac.tees.mad.minilibrary.screens.SettingsScreen
 
@@ -69,12 +70,12 @@ fun NavGraph(
             )
         ) { backStackEntry ->
             val bookId = backStackEntry.arguments?.getString("bookId") ?: ""
-//            BookReaderScreen(
-//                bookId = bookId,
-//                onNavigateBack = {
-//                    navController.popBackStack()
-//                }
-//            )
+            BookReaderScreen(
+                bookId = bookId,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
         }
 
         composable(Screen.Settings.route) {
