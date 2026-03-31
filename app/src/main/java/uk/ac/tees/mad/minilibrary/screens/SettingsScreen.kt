@@ -66,7 +66,9 @@ class SettingsViewModel : ViewModel() {
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onLogout: () -> Unit,
-    viewModel: SettingsViewModel = viewModel()
+    viewModel: SettingsViewModel = viewModel(),
+    isDarkTheme: Boolean,
+    onThemeChange: (Boolean) -> Unit
 ) {
     Scaffold(
         topBar = {

@@ -1,6 +1,5 @@
 package uk.ac.tees.mad.minilibrary.navigation
 
-
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -11,19 +10,19 @@ import uk.ac.tees.mad.minilibrary.screens.AuthScreen
 import uk.ac.tees.mad.minilibrary.screens.BookReaderScreen
 import uk.ac.tees.mad.minilibrary.screens.HomeScreen
 import uk.ac.tees.mad.minilibrary.screens.SettingsScreen
-
 import uk.ac.tees.mad.minilibrary.screens.SplashScreen
 
 @Composable
 fun NavGraph(
     navController: NavHostController,
-    startDestination: String = Screen.Splash.route
+    startDestination: String = Screen.Splash.route,
+    isDarkTheme: Boolean,
+    onThemeChange: (Boolean) -> Unit
 ) {
     NavHost(
         navController = navController,
         startDestination = startDestination
     ) {
-        // Splash Screen
         composable(Screen.Splash.route) {
             SplashScreen(
                 onNavigateToAuth = {
@@ -39,7 +38,6 @@ fun NavGraph(
             )
         }
 
-        // Authentication Screen
         composable(Screen.Auth.route) {
             AuthScreen(
                 onNavigateToHome = {
@@ -50,7 +48,6 @@ fun NavGraph(
             )
         }
 
-        // Home Screen
         composable(Screen.Home.route) {
             HomeScreen(
                 onNavigateToReader = { bookId ->
@@ -62,7 +59,6 @@ fun NavGraph(
             )
         }
 
-        // Book Reader Screen (with argument)
         composable(
             route = Screen.BookReader.route,
             arguments = listOf(
@@ -87,7 +83,9 @@ fun NavGraph(
                     navController.navigate(Screen.Auth.route) {
                         popUpTo(0) { inclusive = true }
                     }
-                }
+                },
+                isDarkTheme = isDarkTheme,
+                onThemeChange = onThemeChange
             )
         }
     }
