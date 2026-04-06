@@ -255,7 +255,6 @@ fun HomeScreen(
     val viewModel: HomeViewModel = viewModel(
         factory = object : androidx.lifecycle.ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                @Suppress("UNCHECKED_CAST")
                 return HomeViewModel(context) as T
             }
         }
@@ -274,69 +273,73 @@ fun HomeScreen(
                         Text(
                             "Welcome, ${viewModel.userName}",
                             fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
                         )
                     }
                 },
                 actions = {
                     IconButton(onClick = onNavigateToSettings) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings"
-                        )
+                        Icon(Icons.Default.Settings, "Settings")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF6366F1),
-                    titleContentColor = Color.White,
-                    actionIconContentColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
         },
+
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { viewModel.toggleUploadDialog() },
-                containerColor = Color(0xFF6366F1),
-                contentColor = Color.White
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Add Book"
-                )
+                Icon(Icons.Default.Add, "Add Book")
             }
         }
+
     ) { paddingValues ->
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            if (viewModel.isLoading) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(
-                        color = Color(0xFF6366F1)
-                    )
-                }
-            } else if (viewModel.books.isEmpty()) {
-                EmptyLibraryView(
-                    onAddBook = { viewModel.toggleUploadDialog() }
-                )
-            } else {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    contentPadding = PaddingValues(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(viewModel.books) { book ->
-                        BookCard(
-                            book = book,
-                            onClick = { onNavigateToReader(book.id) },
-                            onDelete = { viewModel.deleteBook(book) }
+
+            when {
+                viewModel.isLoading -> {
+                    Box(
+                        Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.primary
                         )
+                    }
+                }
+
+                viewModel.books.isEmpty() -> {
+                    EmptyLibraryView {
+                        viewModel.toggleUploadDialog()
+                    }
+                }
+
+                else -> {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        contentPadding = PaddingValues(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(viewModel.books) { book ->
+                            BookCard(
+                                book = book,
+                                onClick = { onNavigateToReader(book.id) },
+                                onDelete = { viewModel.deleteBook(book) }
+                            )
+                        }
                     }
                 }
             }
@@ -350,6 +353,7 @@ fun HomeScreen(
         }
     }
 }
+
 
 @Composable
 fun EmptyLibraryView(
@@ -414,6 +418,7 @@ fun BookCard(
     onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
+
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     Card(
@@ -421,84 +426,74 @@ fun BookCard(
             .fillMaxWidth()
             .height(220.dp)
             .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(4.dp),
-        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
+
+        Column {
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(140.dp)
                     .background(
                         Brush.verticalGradient(
-                            colors = listOf(
-                                Color(0xFF6366F1),
-                                Color(0xFF8B5CF6)
+                            listOf(
+                                MaterialTheme.colorScheme.primary,
+                                MaterialTheme.colorScheme.primaryContainer
                             )
                         )
                     ),
                 contentAlignment = Alignment.Center
             ) {
+
                 Icon(
-                    imageVector = Icons.Default.MenuBook,
-                    contentDescription = null,
+                    Icons.Default.MenuBook,
+                    null,
                     modifier = Modifier.size(60.dp),
-                    tint = Color.White.copy(alpha = 0.8f)
+                    tint = MaterialTheme.colorScheme.onPrimary
                 )
 
                 IconButton(
                     onClick = { showDeleteDialog = true },
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(4.dp)
-                        .size(32.dp)
+                    modifier = Modifier.align(Alignment.TopEnd)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete",
-                        tint = Color.White,
-                        modifier = Modifier.size(18.dp)
+                        Icons.Default.Delete,
+                        "Delete",
+                        tint = MaterialTheme.colorScheme.onPrimary
                     )
                 }
             }
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp)
-            ) {
+            Column(Modifier.padding(12.dp)) {
+
                 Text(
-                    text = book.title,
-                    fontSize = 14.sp,
+                    book.title,
                     fontWeight = FontWeight.Bold,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(Modifier.height(4.dp))
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+
                     Icon(
-                        imageVector = Icons.Default.Label,
-                        contentDescription = null,
+                        Icons.Default.Label,
+                        null,
                         modifier = Modifier.size(14.dp),
-                        tint = Color(0xFF6366F1)
+                        tint = MaterialTheme.colorScheme.primary
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+
+                    Spacer(Modifier.width(4.dp))
+
                     Text(
-                        text = book.subject,
+                        book.subject,
                         fontSize = 12.sp,
-                        color = Color.Gray,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -509,25 +504,22 @@ fun BookCard(
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             title = { Text("Delete Book?") },
-            text = { Text("Are you sure you want to delete \"${book.title}\"? This action cannot be undone.") },
+            text = { Text("Delete \"${book.title}\" ?") },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        onDelete()
-                        showDeleteDialog = false
-                    }
-                ) {
-                    Text("Delete", color = Color.Red)
-                }
+                TextButton({
+                    onDelete()
+                    showDeleteDialog = false
+                }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
+                TextButton({ showDeleteDialog = false }) {
                     Text("Cancel")
                 }
             }
         )
     }
 }
+
 
 @Composable
 fun UploadBookDialog(
@@ -618,7 +610,7 @@ fun UploadBookDialog(
                     Spacer(modifier = Modifier.height(8.dp))
                     Card(
                         colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFFFEBEE)
+                            containerColor = MaterialTheme.colorScheme.surface
                         )
                     ) {
                         Row(
