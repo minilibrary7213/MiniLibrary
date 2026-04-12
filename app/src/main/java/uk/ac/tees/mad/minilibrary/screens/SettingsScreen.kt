@@ -215,9 +215,7 @@ fun SettingsScreen(
     var showSuccessSnackbar by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(viewModel.isDarkTheme) {
-        onThemeChange(viewModel.isDarkTheme)
-    }
+ 
 
     LaunchedEffect(showSuccessSnackbar) {
         if (showSuccessSnackbar) {
@@ -353,15 +351,10 @@ fun SettingsScreen(
                         }
 
                         Switch(
-                            checked = viewModel.isDarkTheme,
-                            onCheckedChange = { viewModel.toggleTheme() },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,
-                                checkedTrackColor = Color(0xFF6366F1),
-                                uncheckedThumbColor = Color.White,
-                                uncheckedTrackColor = Color.Gray
-                            )
+                            checked = isDarkTheme,
+                            onCheckedChange = onThemeChange
                         )
+
                     }
 
                     Divider()
