@@ -215,7 +215,7 @@ fun SettingsScreen(
     var showSuccessSnackbar by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
- 
+
 
     LaunchedEffect(showSuccessSnackbar) {
         if (showSuccessSnackbar) {
@@ -504,44 +504,35 @@ fun SettingsItem(
     title: String,
     subtitle: String,
     onClick: () -> Unit,
-    iconTint: Color = Color(0xFF6366F1),
-    titleColor: Color = Color.Black
+    iconTint: Color = MaterialTheme.colorScheme.primary,
+    titleColor: Color = MaterialTheme.colorScheme.onSurface
 ) {
+
     Row(
-        modifier = Modifier
+        Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = iconTint,
-            modifier = Modifier.size(24.dp)
-        )
 
-        Spacer(modifier = Modifier.width(16.dp))
+        Icon(icon, null, tint = iconTint)
 
-        Column(modifier = Modifier.weight(1f)) {
+        Spacer(Modifier.width(16.dp))
+
+        Column(Modifier.weight(1f)) {
+            Text(title, fontWeight = FontWeight.Medium, color = titleColor)
             Text(
-                text = title,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                color = titleColor
-            )
-            Text(
-                text = subtitle,
+                subtitle,
                 fontSize = 12.sp,
-                color = Color.Gray
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
         Icon(
-            imageVector = Icons.Default.ChevronRight,
-            contentDescription = null,
-            tint = Color.Gray,
-            modifier = Modifier.size(20.dp)
+            Icons.Default.ChevronRight,
+            null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
