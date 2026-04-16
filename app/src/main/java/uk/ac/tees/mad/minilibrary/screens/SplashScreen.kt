@@ -13,6 +13,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
@@ -144,6 +145,73 @@ fun SplashScreen(
                     modifier = Modifier.size(32.dp)
                 )
             }
+        }
+    }
+}
+
+@Preview(showBackground = true, name = "SplashScreenPreview")
+@Composable
+fun SplashScreenPreview() {
+    val infiniteTransition = rememberInfiniteTransition(label = "splash")
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 0.9f,
+        targetValue = 1.1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "scale"
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF6366F1),
+                        Color(0xFF8B5CF6)
+                    )
+                )
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.MenuBook,
+                contentDescription = "MiniLibrary Logo",
+                modifier = Modifier
+                    .size(120.dp)
+                    .scale(scale),
+                tint = Color.White
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "MiniLibrary",
+                fontSize = 36.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Your Personal Digital Library",
+                fontSize = 14.sp,
+                color = Color.White.copy(alpha = 0.8f)
+            )
+
+            Spacer(modifier = Modifier.height(48.dp))
+
+            CircularProgressIndicator(
+                color = Color.White,
+                modifier = Modifier.size(32.dp)
+            )
         }
     }
 }
