@@ -61,7 +61,7 @@ class HomeViewModel(private val context: Context) : ViewModel() {
         loadUserInfo()
     }
 
-    private fun loadUserInfo() { "load the registered user"
+    private fun loadUserInfo() { //user data//
         viewModelScope.launch {
             try {
                 val user = SupabaseClient.auth.currentUserOrNull()
