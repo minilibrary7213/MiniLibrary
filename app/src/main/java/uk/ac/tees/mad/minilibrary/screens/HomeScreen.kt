@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -61,7 +62,7 @@ class HomeViewModel(private val context: Context) : ViewModel() {
         loadUserInfo()
     }
 
-    private fun loadUserInfo() { //user data//
+    private fun loadUserInfo() {
         viewModelScope.launch {
             try {
                 val user = SupabaseClient.auth.currentUserOrNull()
@@ -321,8 +322,36 @@ fun HomeScreen(
                 }
 
                 viewModel.books.isEmpty() -> {
-                    EmptyLibraryView {
-                        viewModel.toggleUploadDialog()
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.MenuBook,
+                                contentDescription = "No books",
+                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                                modifier = Modifier.size(72.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "No books yet",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Tap the + button to upload your first PDF",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     }
                 }
 
