@@ -48,7 +48,7 @@ class HomeViewModel(private val context: Context) : ViewModel() {
     var books by mutableStateOf<List<Book>>(emptyList())
         private set
 
-    var isLoading by mutableStateOf(true)
+    var isLoading by mutableStateOf(false)
         private set
 
     var showUploadDialog by mutableStateOf(false)
@@ -100,8 +100,6 @@ class HomeViewModel(private val context: Context) : ViewModel() {
                 }
                 bookDao.insertBooks(entities)
 
-                isLoading = false
-
             } catch (e: Exception) {
                 e.printStackTrace()
 
@@ -120,7 +118,7 @@ class HomeViewModel(private val context: Context) : ViewModel() {
                         }
                     }
                 }
-
+            } finally {
                 isLoading = false
             }
         }
