@@ -354,18 +354,27 @@ fun HomeScreen(
                 }
 
                 else -> {
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
-                        contentPadding = PaddingValues(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(viewModel.books) { book ->
-                            BookCard(
-                                book = book,
-                                onClick = { onNavigateToReader(book.id) },
-                                onDelete = { viewModel.deleteBook(book) }
-                            )
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Text(
+                            text = "${viewModel.books.size} ${if (viewModel.books.size == 1) "book" else "books"} in your library",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                        )
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(2),
+                            contentPadding = PaddingValues(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            items(viewModel.books) { book ->
+                                BookCard(
+                                    book = book,
+                                    onClick = { onNavigateToReader(book.id) },
+                                    onDelete = { viewModel.deleteBook(book) }
+                                )
+                            }
                         }
                     }
                 }
