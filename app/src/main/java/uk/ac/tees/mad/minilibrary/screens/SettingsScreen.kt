@@ -415,14 +415,13 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.weight(1f))
 
             Text(
-                text = "MiniLibrary • Your Personal Digital Library\nUsing: File Storage Access • PDF Viewer",
-                fontSize = 11.sp,
-                color = Color.Gray,
+                text = "MiniLibrary v1.0",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                lineHeight = 16.sp
+                    .padding(bottom = 24.dp),
+                textAlign = TextAlign.Center
             )
         }
     }
@@ -734,14 +733,13 @@ fun SettingsScreenPreview() {
             Spacer(modifier = Modifier.weight(1f))
 
             Text(
-                text = "MiniLibrary • Your Personal Digital Library\nUsing: File Storage Access • PDF Viewer",
-                fontSize = 11.sp,
-                color = Color.Gray,
+                text = "MiniLibrary v1.0",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                textAlign = TextAlign.Center,
-                lineHeight = 16.sp
+                    .padding(bottom = 24.dp),
+                textAlign = TextAlign.Center
             )
         }
     }
