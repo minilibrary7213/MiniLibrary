@@ -50,17 +50,25 @@ class AuthViewModel : ViewModel() {
     var errorMessage by mutableStateOf<String?>(null)
         private set
 
+    var emailError by mutableStateOf("")
+        private set
+
+    var passwordError by mutableStateOf("")
+        private set
+
     var passwordVisible by mutableStateOf(false)
         private set
 
     fun onEmailChange(newEmail: String) {
         email = newEmail
         errorMessage = null
+        emailError = ""
     }
 
     fun onPasswordChange(newPassword: String) {
         password = newPassword
         errorMessage = null
+        passwordError = ""
     }
 
     fun togglePasswordVisibility() {
@@ -70,23 +78,37 @@ class AuthViewModel : ViewModel() {
     fun toggleAuthMode() {
         isLogin = !isLogin
         errorMessage = null
+        emailError = ""
+        passwordError = ""
+    }
+
+    private fun validate(): Boolean {
+        var valid = true
+        if (email.isBlank()) {
+            emailError = "Email cannot be empty"
+            valid = false
+        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            emailError = "Enter a valid email address"
+            valid = false
+        } else {
+            emailError = ""
+        }
+
+        if (password.isBlank()) {
+            passwordError = "Password cannot be empty"
+            valid = false
+        } else if (password.length < 6) {
+            passwordError = "Password must be at least 6 characters"
+            valid = false
+        } else {
+            passwordError = ""
+        }
+
+        return valid
     }
 
     fun authenticate(onSuccess: () -> Unit) {
-        if (email.isBlank() || password.isBlank()) {
-            errorMessage = "Please fill in all fields"
-            return
-        }
-
-        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            errorMessage = "Please enter a valid email"
-            return
-        }
-
-        if (password.length < 6) {
-            errorMessage = "Password must be at least 6 characters"
-            return
-        }
+        if (!validate()) return
 
         viewModelScope.launch {
             isLoading = true
@@ -194,6 +216,12 @@ fun AuthScreen(
                         value = viewModel.email,
                         onValueChange = viewModel::onEmailChange,
                         label = { Text("Email") },
+                        isError = viewModel.emailError.isNotEmpty(),
+                        supportingText = {
+                            if (viewModel.emailError.isNotEmpty()) {
+                                Text(text = viewModel.emailError, color = MaterialTheme.colorScheme.error)
+                            }
+                        },
                         leadingIcon = {
                             Icon(Icons.Default.Email, contentDescription = null)
                         },
@@ -218,6 +246,12 @@ fun AuthScreen(
                         value = viewModel.password,
                         onValueChange = viewModel::onPasswordChange,
                         label = { Text("Password") },
+                        isError = viewModel.passwordError.isNotEmpty(),
+                        supportingText = {
+                            if (viewModel.passwordError.isNotEmpty()) {
+                                Text(text = viewModel.passwordError, color = MaterialTheme.colorScheme.error)
+                            }
+                        },
                         leadingIcon = {
                             Icon(Icons.Default.Lock, contentDescription = null)
                         },
